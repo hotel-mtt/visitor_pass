@@ -34,17 +34,24 @@ SHEETS_READ_URL = (
 )
 
 DATES = [
-    {"key": "6 Mei 2025",  "label": "Selasa, 6 Mei 2025"},
-    {"key": "13 Mei 2025", "label": "Selasa, 13 Mei 2025"},
-    {"key": "20 Mei 2025", "label": "Selasa, 20 Mei 2025"},
-    {"key": "27 Mei 2025", "label": "Selasa, 27 Mei 2025"},
+    {"key": "6 Mei 2026",  "label": "Selasa, 6 Mei 2026"},
+    {"key": "13 Mei 2026", "label": "Selasa, 13 Mei 2026"},
+    {"key": "20 Mei 2026", "label": "Selasa, 20 Mei 2026"},
+    {"key": "27 Mei 2026", "label": "Selasa, 27 Mei 2026"},
+    {"key": "2 Jun 2026", "label": "Selasa, 2 Jun 2026"},
+    {"key": "9 Jun 2026", "label": "Selasa, 9 Jun 2026"},
+    {"key": "23 Jun 2026", "label": "Selasa, 23 Jun 2026"},
+    {"key": "30 Jun 2026", "label": "Selasa, 30 Jun 2026"},
+    {"key": "7 Jul 2026", "label": "Selasa, 7 Jul 2026"},
+    {"key": "14 Jul 2026", "label": "Selasa, 14 Jul 2026"},
+    {"key": "21 Jul 2026", "label": "Selasa, 21 Jul 2026"},
+    {"key": "28 Jul 2026", "label": "Selasa, 28 Jul 2026"},
 ]
 
 SESSIONS = [
     {"id": "P1", "value": "Pagi 09.00-10.00 WIB",  "label": "Pagi  09.00 - 10.00 WIB"},
     {"id": "P2", "value": "Pagi 10.00-11.00 WIB",  "label": "Pagi  10.00 - 11.00 WIB"},
     {"id": "S1", "value": "Siang 13.30-14.30 WIB", "label": "Siang 13.30 - 14.30 WIB"},
-    {"id": "S2", "value": "Siang 14.30-15.30 WIB", "label": "Siang 14.30 - 15.30 WIB"},
 ]
 
 HOTEL_BRANDS = [
