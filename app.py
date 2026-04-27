@@ -22,7 +22,7 @@ st.set_page_config(
 )
 
 # ── CONFIG ────────────────────────────────────────────────────────
-GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbzm4Mnax-z0oq7Wao7Gz9C_tw4CgKLlyl0GfSTJGeIHAfhzSilZtQvr947Ym-1p2DqwkA/exec"
+GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbxwHYIOXzbr6JNRVTEMmjCBiPuYWFmla3KYUMQcAPaYM1Jm-6Kih4SU9Swhhvk3PUtFAA/exec"
 SHEET_ID     = "1AQz-w3sLjGVdOsneDmdTFHFW6Nx7Z337Kjw2zzqFoXI"
 API_KEY      = "AIzaSyA1Mau8yZxao0MD5Mx_Dt027EuMbrUN9oo"
 SHEET_NAME   = "Sheet1"
