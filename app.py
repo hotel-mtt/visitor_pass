@@ -40,9 +40,25 @@ SHEETS_READ_URL = (
 )
 
 # ══════════════════════════════════════════════════════════════════
-# LOGO — dari URL eksternal
+# LOGO — download sekali lalu embed Base64 agar tidak kena CORS
 # ══════════════════════════════════════════════════════════════════
-LOGO_SRC = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSktXTDoA1ptcm0zfQ8kJSpBq-FIwiXa_XTqA&s"
+import base64 as _b64
+@st.cache_resource
+def _get_logo_src() -> str:
+    """Download logo sekali, cache selamanya."""
+    _logo_url = "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSktXTDoA1ptcm0zfQ8kJSpBq-FIwiXa_XTqA&s"
+    try:
+        r = requests.get(_logo_url, timeout=8,
+                         headers={"User-Agent": "Mozilla/5.0"})
+        if r.ok:
+            mime = r.headers.get("Content-Type", "image/jpeg").split(";")[0]
+            b64  = _b64.b64encode(r.content).decode()
+            return f"data:{mime};base64,{b64}"
+    except Exception:
+        pass
+    return ""
+
+LOGO_SRC = _get_logo_src()
 
 # ══════════════════════════════════════════════════════════════════
 # JADWAL — ubah tanggal & sesi di sini
@@ -313,7 +329,8 @@ def render_steps(current: int):
         lc = "active" if i == current else ("done" if i < current else "")
         html += f'<div class="mtr-step">{circ(i)}<span class="mtr-step-label {lc}">{lbl}</span></div>'
         if i < 4:
-            html += f'<div class="mtr-connector {"done" if i < current else ""}"></div>'
+            conn_cls = "done" if i < current else ""
+            html += f'<div class="mtr-connector {conn_cls}"></div>'
     html += "</div>"
     st.markdown(html, unsafe_allow_html=True)
 
@@ -514,12 +531,13 @@ def render_step3():
                 is_picked = (st.session_state.sel_date_key == dt["key"] and
                              st.session_state.sel_sess_value == sess["value"])
                 with cols[i % 2]:
+                    sess_lbl_taken = sess["label"]
                     if is_taken:
                         st.markdown(
                             f'<div style="border:1.5px solid #FECACA;background:#FEF2F2;border-radius:8px;'
                             f'padding:10px 13px;margin-bottom:8px;opacity:.75;">' +
                             f'<div style="font-size:11px;font-weight:700;color:#991B1B;text-transform:uppercase;margin-bottom:4px;">Penuh</div>' +
-                            f'<div style="font-size:14px;font-weight:700;color:#9CA3AF;text-decoration:line-through;">{sess["label"]}</div></div>',
+                            f'<div style="font-size:14px;font-weight:700;color:#9CA3AF;text-decoration:line-through;">{sess_lbl_taken}</div></div>',
                             unsafe_allow_html=True)
                     else:
                         ps = "border:2px solid #2563EB;background:#EFF6FF;" if is_picked else "border:1.5px solid #6EE7B7;background:#ECFDF5;"
