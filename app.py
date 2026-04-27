@@ -22,7 +22,7 @@ st.set_page_config(
 )
 
 # ── CONFIG ────────────────────────────────────────────────────────
-GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbxwHYIOXzbr6JNRVTEMmjCBiPuYWFmla3KYUMQcAPaYM1Jm-6Kih4SU9Swhhvk3PUtFAA/exec"
+GAS_ENDPOINT = "https://script.google.com/macros/s/AKfycbz78iwrv1FiIHqpqbA4dX6sQVzcfO4UodJ3BhW4bLH_7zLA_c4wMmXpuhHSGC5yiE6Pww/exec"
 SHEET_ID     = "1AQz-w3sLjGVdOsneDmdTFHFW6Nx7Z337Kjw2zzqFoXI"
 API_KEY      = "AIzaSyA1Mau8yZxao0MD5Mx_Dt027EuMbrUN9oo"
 SHEET_NAME   = "Sheet1"
@@ -125,22 +125,95 @@ def generate_ref() -> str:
 
 # ── GAS WRITE + EMAIL NOTIF ───────────────────────────────────────
 def save_to_gas(payload: dict) -> tuple:
+    """
+    GAS Web App selalu melakukan redirect 302 saat menerima POST.
+    requests.post() tidak mengikuti redirect untuk POST — akibatnya
+    Google mengembalikan halaman HTML error.
+    Solusi: kirim sebagai POST dengan allow_redirects=True dan
+    fallback ke GET dengan payload di query string jika masih gagal.
+    """
     try:
         payload["notifEmail"] = NOTIF_EMAIL
-        resp = requests.post(GAS_ENDPOINT, json=payload, timeout=30,
-                             headers={"Content-Type": "application/json"})
-        if not resp.ok:
-            return False, f"HTTP {resp.status_code}: {resp.text[:200]}"
-        try:
-            result = resp.json()
-        except Exception:
-            return False, f"Response bukan JSON: {resp.text[:150]}"
-        if result.get("success"):
-            return True, result.get("ref", "")
-        elif result.get("error") == "SLOT_TAKEN":
-            return False, "SLOT_TAKEN"
-        else:
-            return False, result.get("message", result.get("error", "Unknown error"))
+        import json as _json
+
+        # ── Strategi 1: POST dengan follow redirect ──
+        session = requests.Session()
+        resp = session.post(
+            GAS_ENDPOINT,
+            data=_json.dumps(payload),
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            allow_redirects=True,
+            timeout=30,
+        )
+
+        # Cek apakah response adalah JSON
+        content_type = resp.headers.get("Content-Type", "")
+        raw = resp.text.strip()
+
+        if "application/json" in content_type or (raw.startswith("{") and raw.endswith("}")):
+            try:
+                result = _json.loads(raw)
+                if result.get("success"):
+                    return True, result.get("ref", "")
+                elif result.get("error") == "SLOT_TAKEN":
+                    return False, "SLOT_TAKEN"
+                else:
+                    return False, result.get("message", result.get("error", "Unknown error"))
+            except Exception:
+                pass
+
+        # ── Strategi 2: POST ke URL dengan ?method=POST ──
+        # GAS kadang butuh parameter tambahan untuk bypass redirect
+        resp2 = session.post(
+            GAS_ENDPOINT + "?method=POST",
+            data=_json.dumps(payload),
+            headers={
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            allow_redirects=True,
+            timeout=30,
+        )
+        raw2 = resp2.text.strip()
+        if raw2.startswith("{"):
+            try:
+                result2 = _json.loads(raw2)
+                if result2.get("success"):
+                    return True, result2.get("ref", "")
+                elif result2.get("error") == "SLOT_TAKEN":
+                    return False, "SLOT_TAKEN"
+                else:
+                    return False, result2.get("message", result2.get("error", "Unknown error"))
+            except Exception:
+                pass
+
+        # ── Strategi 3: GET dengan payload di query string ──
+        # Sebagai fallback terakhir — GAS doGet bisa menerima ini
+        import urllib.parse as _up
+        params = _up.urlencode({"payload": _json.dumps(payload), "action": "write"})
+        resp3 = session.get(
+            GAS_ENDPOINT + "?" + params,
+            allow_redirects=True,
+            timeout=30,
+        )
+        raw3 = resp3.text.strip()
+        if raw3.startswith("{"):
+            try:
+                result3 = _json.loads(raw3)
+                if result3.get("success"):
+                    return True, result3.get("ref", "")
+                elif result3.get("error") == "SLOT_TAKEN":
+                    return False, "SLOT_TAKEN"
+                else:
+                    return False, result3.get("message", result3.get("error", "Unknown error"))
+            except Exception:
+                pass
+
+        return False, f"Semua strategi gagal. Response: {raw[:200]}"
+
     except requests.exceptions.Timeout:
         return False, "Timeout — coba lagi"
     except Exception as e:
