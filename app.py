@@ -857,8 +857,8 @@ def main():
     elif s == 4: render_step4()
     elif s == 5: render_success()
     st.markdown(
-        '<div class="footer">VisitorPass &nbsp;·&nbsp; Mitra Tours &amp; Travel'
-        ' &nbsp;·&nbsp; Powered by Mitra Tours and Travel  • Version 1.0</div>',
+        '<div class="footer">VisitorPass &nbsp;·&nbsp; Powered by'
+        ' &nbsp;·&nbsp; Mitra Tours and Travel  • Version 1.0</div>',
         unsafe_allow_html=True)
 
 if __name__ == "__main__":
