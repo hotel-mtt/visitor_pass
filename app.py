@@ -47,9 +47,9 @@ DATES = [
 ]
 
 SESSIONS = [
-    {"id":"P1","value":"Pagi 09.00-10.00 WIB",  "icon":"🌅","label":"Pagi 09.00–10.00 WIB"},
-    {"id":"P2","value":"Pagi 10.00-11.00 WIB",  "icon":"🌅","label":"Pagi 10.00–11.00 WIB"},
-    {"id":"S1","value":"Siang 13.30-14.30 WIB", "icon":"☀️","label":"Siang 13.30–14.30 WIB"},
+    {"id":"P1","value":"09.00-10.00 WIB",  "icon":"-","label":"09.00–10.00 WIB"},
+    {"id":"P2","value":"10.00-11.00 WIB",  "icon":"-","label":"10.00–11.00 WIB"},
+    {"id":"S1","value":"13.30-14.30 WIB", "icon":"-","label":"13.30–14.30 WIB"},
 ]
 
 HOTEL_BRANDS = [
