@@ -138,8 +138,8 @@ def save_to_gas(payload):
                 r = _j.loads(raw)
                 if r.get("success"):
                     return True, r.get("ref", "")
-                if r.get("error") == "SLOT_TAKEN":
-                    return False, "SLOT_TAKEN"
+                if r.get("error") == "Jadwal_TAKEN":
+                    return False, "Jadwal_TAKEN"
                 return False, r.get("message", r.get("error", "Unknown"))
         except requests.exceptions.Timeout:
             return False, "Timeout — coba lagi"
@@ -154,8 +154,8 @@ def save_to_gas(payload):
             rr = _j.loads(raw3)
             if rr.get("success"):
                 return True, rr.get("ref", "")
-            if rr.get("error") == "SLOT_TAKEN":
-                return False, "SLOT_TAKEN"
+            if rr.get("error") == "Jadwal_TAKEN":
+                return False, "Jadwal_TAKEN"
             return False, rr.get("message", rr.get("error", "Unknown"))
     except Exception as e:
         return False, str(e)
@@ -248,9 +248,9 @@ html,body,[class*="css"]{font-family:'Plus Jakarta Sans',sans-serif!important}
   font-size:9px;font-weight:700;display:flex;align-items:center;
   justify-content:center;flex-shrink:0}
 
-/* ── SLOT RADIO — styled as card list ── */
+/* ── Jadwal RADIO — styled as card list ── */
 /* Container */
-div[data-testid="stRadio"][data-slot-radio] > div {
+div[data-testid="stRadio"][data-Jadwal-radio] > div {
   border: 1.5px solid #e2eaf4 !important;
   border-radius: 10px !important;
   overflow: hidden !important;
@@ -258,7 +258,7 @@ div[data-testid="stRadio"][data-slot-radio] > div {
   padding: 0 !important;
 }
 /* Each radio option */
-div[data-testid="stRadio"][data-slot-radio] > div > label {
+div[data-testid="stRadio"][data-Jadwal-radio] > div > label {
   display: flex !important;
   align-items: center !important;
   padding: 14px 16px !important;
@@ -271,18 +271,18 @@ div[data-testid="stRadio"][data-slot-radio] > div > label {
   background: #fff !important;
   transition: background .12s !important;
 }
-div[data-testid="stRadio"][data-slot-radio] > div > label:last-child {
+div[data-testid="stRadio"][data-Jadwal-radio] > div > label:last-child {
   border-bottom: none !important;
 }
-div[data-testid="stRadio"][data-slot-radio] > div > label:hover {
+div[data-testid="stRadio"][data-Jadwal-radio] > div > label:hover {
   background: #f4f8fd !important;
 }
 /* Hide default radio circle */
-div[data-testid="stRadio"][data-slot-radio] > div > label > div:first-child {
+div[data-testid="stRadio"][data-Jadwal-radio] > div > label > div:first-child {
   display: none !important;
 }
 /* The label text */
-div[data-testid="stRadio"][data-slot-radio] > div > label p {
+div[data-testid="stRadio"][data-Jadwal-radio] > div > label p {
   font-size: 13.5px !important;
   font-weight: 600 !important;
   color: #1a2332 !important;
@@ -403,16 +403,16 @@ def valid_email(e):
 def render_step1():
     booked = fetch_booked()
 
-    ibox("Kunjungan setiap <strong>Selasa</strong> · 1 hotel per slot · "
+    ibox("Kunjungan setiap <strong>Selasa</strong> · 1 hotel per Jadwal · "
          "Pilih tanggal lalu pilih jam yang tersedia")
 
     # Conflict alerts
     if st.session_state.conflict_type == "blocking":
         st.markdown(
-            f'<div class="alert-red"><strong>Slot tidak tersedia</strong><br>'
+            f'<div class="alert-red"><strong>Jadwal tidak tersedia</strong><br>'
             f'{st.session_state.conflict_msg}</div>', unsafe_allow_html=True)
         if st.session_state.alternatives:
-            st.caption("Pilih slot alternatif:")
+            st.caption("Pilih Jadwal alternatif:")
             for alt in st.session_state.alternatives:
                 if st.button(
                     f"→ {alt['date_label']} · {alt['sess_label']}",
@@ -427,7 +427,7 @@ def render_step1():
 
     elif st.session_state.conflict_type == "ok":
         st.markdown(
-            f'<div class="alert-green"><strong>&#10003; Slot dipilih</strong><br>'
+            f'<div class="alert-green"><strong>&#10003; Jadwal dipilih</strong><br>'
             f'{st.session_state.conflict_msg}</div>', unsafe_allow_html=True)
 
     # ── Dropdown tanggal ──────────────────────────────────────────
@@ -444,9 +444,9 @@ def render_step1():
         if free == 0:
             suf = " — Penuh"
         elif free < len(SESSIONS):
-            suf = f" — {free} slot tersisa"
+            suf = f" — {free} Jadwal tersisa"
         else:
-            suf = f" — {free} slot tersedia"
+            suf = f" — {free} Jadwal tersedia"
         opt = dt["label"] + suf
         date_opts.append(opt)
         date_map[opt] = dt
@@ -465,7 +465,7 @@ def render_step1():
         label_visibility="collapsed", key="dd_tanggal")
     chosen_dt = date_map.get(chosen_label)
 
-    # Reset slot when date changes
+    # Reset Jadwal when date changes
     if chosen_dt and chosen_dt["key"] != st.session_state.sel_date_key:
         st.session_state.sel_date_key   = chosen_dt["key"]
         st.session_state.sel_date_label = chosen_dt["label"]
@@ -474,7 +474,7 @@ def render_step1():
         st.session_state.conflict_type  = None
         st.rerun()
 
-    # ── Radio slot jam ────────────────────────────────────────────
+    # ── Radio Jadwal jam ────────────────────────────────────────────
     if chosen_dt:
         dk = chosen_dt["key"]
         st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
@@ -484,23 +484,23 @@ def render_step1():
             unsafe_allow_html=True)
 
         # Build options: available sessions only, taken shown as disabled text
-        slot_options  = []   # values for radio
-        slot_labels   = []   # display labels for radio
-        slot_taken_set = set()
+        Jadwal_options  = []   # values for radio
+        Jadwal_labels   = []   # display labels for radio
+        Jadwal_taken_set = set()
 
         for sess in SESSIONS:
             taken = is_booked(booked, dk, sess["value"])
             if taken:
                 # Show as disabled label — radio won't include this
-                slot_taken_set.add(sess["value"])
+                Jadwal_taken_set.add(sess["value"])
             else:
-                slot_options.append(sess["value"])
-                slot_labels.append(f"{sess['icon']}  {sess['label']}")
+                Jadwal_options.append(sess["value"])
+                Jadwal_labels.append(f"{sess['icon']}  {sess['label']}")
 
-        # Show taken slots as greyed HTML above radio
+        # Show taken Jadwals as greyed HTML above radio
         taken_html = ""
         for sess in SESSIONS:
-            if sess["value"] in slot_taken_set:
+            if sess["value"] in Jadwal_taken_set:
                 taken_html += (
                     f'<div style="display:flex;align-items:center;gap:12px;'
                     f'padding:14px 16px;border:1.5px solid #e2eaf4;border-radius:10px;'
@@ -512,29 +512,29 @@ def render_step1():
                     f'<div style="font-size:13.5px;font-weight:600;color:#94a3b8;'
                     f'text-decoration:line-through">{sess["label"]}</div>'
                     f'<div style="font-size:11.5px;color:#94a3b8;margin-top:2px">'
-                    f'Slot ini sudah terisi hotel lain</div></div>'
+                    f'Jadwal ini sudah terisi hotel lain</div></div>'
                     f'<span style="font-size:10px;font-weight:600;padding:4px 10px;'
                     f'border-radius:8px;background:#fdeaea;color:#ec1a23;white-space:nowrap">'
                     f'Penuh</span></div>')
 
-        if not slot_options:
-            # All slots full for this date
+        if not Jadwal_options:
+            # All Jadwals full for this date
             st.markdown(
                 f'<div style="border:1.5px solid #e2eaf4;border-radius:10px;'
                 f'overflow:hidden;margin-bottom:6px">{taken_html}</div>',
                 unsafe_allow_html=True)
-            st.warning("Semua slot pada tanggal ini sudah penuh. Pilih tanggal lain.")
+            st.warning("Semua Jadwal pada tanggal ini sudah penuh. Pilih tanggal lain.")
         else:
             # Determine current radio selection
             cur_sess = (st.session_state.sel_sess_value
                         if st.session_state.sel_date_key == dk else None)
-            cur_radio_idx = (slot_options.index(cur_sess)
-                             if cur_sess in slot_options else 0)
+            cur_radio_idx = (Jadwal_options.index(cur_sess)
+                             if cur_sess in Jadwal_options else 0)
 
-            # Show taken slots first (greyed HTML)
+            # Show taken Jadwals first (greyed HTML)
             taken_above = ""
             for sess in SESSIONS:
-                if sess["value"] in slot_taken_set:
+                if sess["value"] in Jadwal_taken_set:
                     taken_above += (
                         f'<div style="display:flex;align-items:center;gap:12px;'
                         f'padding:14px 16px;border-bottom:1px solid #f0f5fb;'
@@ -546,7 +546,7 @@ def render_step1():
                         f'<div style="font-size:13.5px;font-weight:600;color:#94a3b8;'
                         f'text-decoration:line-through">{sess["label"]}</div>'
                         f'<div style="font-size:11.5px;color:#94a3b8;margin-top:2px">'
-                        f'Slot ini sudah terisi hotel lain</div></div>'
+                        f'Jadwal ini sudah terisi hotel lain</div></div>'
                         f'<span style="font-size:10px;font-weight:600;padding:4px 10px;'
                         f'border-radius:8px;background:#fdeaea;color:#ec1a23">'
                         f'Penuh</span></div>')
@@ -558,16 +558,16 @@ def render_step1():
                     f'overflow:hidden;margin-bottom:6px">{taken_above}</div>',
                     unsafe_allow_html=True)
 
-            # Native st.radio for available slots
+            # Native st.radio for available Jadwals
             chosen_val = st.radio(
                 "Pilih jam",
-                options=slot_options,
+                options=Jadwal_options,
                 format_func=lambda v: next(
                     f"{s['icon']}  {s['label']}" for s in SESSIONS if s["value"] == v
                 ),
                 index=cur_radio_idx,
                 label_visibility="collapsed",
-                key=f"radio_slot_{dk}",
+                key=f"radio_Jadwal_{dk}",
             )
 
             # If selection changed, update and re-verify
@@ -578,7 +578,7 @@ def render_step1():
                     alts = get_alts(fresh, dk, chosen_val)
                     st.session_state.conflict_type = "blocking"
                     st.session_state.conflict_msg  = (
-                        f"Slot ini baru saja diisi hotel lain.")
+                        f"Jadwal ini baru saja diisi hotel lain.")
                     st.session_state.alternatives  = alts
                 else:
                     sess_obj = next(s for s in SESSIONS if s["value"] == chosen_val)
@@ -599,7 +599,7 @@ def render_step1():
         sel_bar()
         c1, c2 = st.columns([1, 2])
         with c1:
-            if st.button("✕ Batal", key="clear_slot"):
+            if st.button("✕ Batal", key="clear_Jadwal"):
                 for k in ("sel_date_key","sel_date_label",
                           "sel_sess_value","sel_sess_label"):
                     st.session_state[k] = None
@@ -718,7 +718,7 @@ def render_step4():
     html = (
         '<div class="rev-wrap"><div class="rev-sec">Jadwal</div>'
         + row("Tanggal", st.session_state.sel_date_label or "—", True)
-        + row("Slot",    st.session_state.sel_sess_label  or "—", True)
+        + row("Jadwal",    st.session_state.sel_sess_label  or "—", True)
         + '<div class="rev-sec">Hotel</div>'
         + row("Hotel",   st.session_state.nama_hotel)
         + row("Alamat",  st.session_state.alamat_hotel)
@@ -756,7 +756,7 @@ def do_submit():
         alts = get_alts(fresh, dk, sv)
         st.session_state.conflict_type = "blocking"
         st.session_state.conflict_msg  = (
-            f"Slot {st.session_state.sel_sess_label} pada "
+            f"Jadwal {st.session_state.sel_sess_label} pada "
             f"{st.session_state.sel_date_label} baru saja dipesan hotel lain.")
         st.session_state.alternatives  = alts
         for k in ("sel_date_key","sel_date_label","sel_sess_value","sel_sess_label"):
@@ -776,7 +776,7 @@ def do_submit():
         "email":       st.session_state.email,
         "peserta":     st.session_state.peserta,
         "tujuan":      ", ".join(st.session_state.tujuan),
-        "tanggal":     dk + " (Selasa)", "slot": sv,
+        "tanggal":     dk + " (Selasa)", "Jadwal": sv,
         "durasi":      st.session_state.durasi or "",
         "catatan":     st.session_state.catatan or "",
         "notifEmail":  NOTIF_EMAIL,
@@ -787,13 +787,13 @@ def do_submit():
         st.session_state.ref_number = result or ref
         st.session_state.step = 5
         _fetch_cached.clear(); st.rerun()
-    elif result == "SLOT_TAKEN":
+    elif result == "Jadwal_TAKEN":
         _fetch_cached.clear()
         fresh2 = fetch_booked()
         alts   = get_alts(fresh2, dk, sv)
         st.session_state.conflict_type = "blocking"
         st.session_state.conflict_msg  = (
-            f"Slot {st.session_state.sel_sess_label} baru saja dipesan saat Anda submit.")
+            f"Jadwal {st.session_state.sel_sess_label} baru saja dipesan saat Anda submit.")
         st.session_state.alternatives  = alts
         for k in ("sel_date_key","sel_date_label","sel_sess_value","sel_sess_label"):
             st.session_state[k] = None
@@ -832,7 +832,7 @@ def render_success():
       <div class="succ-val">{st.session_state.sel_date_label}</div>
     </div>
     <div class="succ-item">
-      <div class="succ-lbl">Slot</div>
+      <div class="succ-lbl">Jadwal</div>
       <div class="succ-val">{st.session_state.sel_sess_label}</div>
     </div>
   </div>
