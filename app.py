@@ -606,7 +606,7 @@ def render_step1():
                 st.session_state.conflict_type = None
                 st.rerun()
         with c2:
-            if st.button("Lanjut ke Data Hotel →",
+            if st.button("Lanjut →",
                          type="primary", key="btn1_next"):
                 st.session_state.step = 2
                 st.rerun()
