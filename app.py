@@ -362,7 +362,7 @@ def render_header():
     <span class="hdr-brand">Mitra Tours &amp; Travel</span>
     <div class="hdr-live"><span class="ldot"></span>Sistem Aktif</div>
   </div>
-  <div class="hdr-h1">Form Kunjungan</div>
+  <div class="hdr-h1">Form Registrasi Kunjungan</div>
   <div class="hdr-sub">Pilih jadwal terlebih dahulu, lalu lengkapi data &amp; kontak.</div>
 </div>""", unsafe_allow_html=True)
 
