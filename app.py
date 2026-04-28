@@ -480,7 +480,7 @@ def render_step1():
         st.markdown("<div style='height:4px'></div>", unsafe_allow_html=True)
         st.markdown(
             '<div class="flbl">'
-            '<span class="flbl-num">2</span>Pilih Jam Kunjungan</div>',
+            '<span class="flbl-num">2</span>Pilih Jadwal</div>',
             unsafe_allow_html=True)
 
         # Build options: available sessions only, taken shown as disabled text
