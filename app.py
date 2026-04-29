@@ -750,57 +750,117 @@ def render_step4():
 def do_submit():
     _fetch_cached.clear()
     fresh = fetch_booked()
+
     dk = st.session_state.sel_date_key
     sv = st.session_state.sel_sess_value
+
+    # ─────────────────────────────────────────────
+    # DOUBLE CHECK SLOT MASIH TERSEDIA
+    # ─────────────────────────────────────────────
     if is_booked(fresh, dk, sv):
         alts = get_alts(fresh, dk, sv)
-        st.session_state.conflict_type = "blocking"
-        st.session_state.conflict_msg  = (
-            f"Jadwal {st.session_state.sel_sess_label} pada "
-            f"{st.session_state.sel_date_label} baru saja dipesan hotel lain.")
-        st.session_state.alternatives  = alts
-        for k in ("sel_date_key","sel_date_label","sel_sess_value","sel_sess_label"):
-            st.session_state[k] = None
-        st.session_state.step = 1; st.rerun(); return
 
+        st.session_state.conflict_type = "blocking"
+        st.session_state.conflict_msg = (
+            f"Jadwal {st.session_state.sel_sess_label} pada "
+            f"{st.session_state.sel_date_label} baru saja dipesan hotel lain."
+        )
+        st.session_state.alternatives = alts
+
+        for k in (
+            "sel_date_key",
+            "sel_date_label",
+            "sel_sess_value",
+            "sel_sess_label",
+        ):
+            st.session_state[k] = None
+
+        st.session_state.step = 1
+        st.rerun()
+        return
+
+    # ─────────────────────────────────────────────
+    # GENERATE REF & WIB TIME
+    # ─────────────────────────────────────────────
     wib = datetime.now(ZoneInfo("Asia/Jakarta"))
     ref = gen_ref()
+
+    # ─────────────────────────────────────────────
+    # PAYLOAD SESUAI GOOGLE APPS SCRIPT
+    # ─────────────────────────────────────────────
     payload = {
-        "ref": ref, "timestamp": wib.strftime("%d/%m/%Y %H:%M:%S"),
-        "namaHotel":   st.session_state.nama_hotel,
-        "alamatHotel": st.session_state.alamat_hotel,
-        "brand":       st.session_state.brand_hotel or "—",
-        "namaPIC":     st.session_state.nama_pic,
-        "jabatan":     st.session_state.jabatan,
-        "noHP":        st.session_state.no_hp,
-        "email":       st.session_state.email,
-        "peserta":     st.session_state.peserta,
-        "tujuan":      ", ".join(st.session_state.tujuan),
-        "tanggal":     dk + " (Selasa)", "Jadwal": sv,
-        "durasi":      st.session_state.durasi or "",
-        "catatan":     st.session_state.catatan or "",
-        "notifEmail":  NOTIF_EMAIL,
+        "ref": ref,
+        "timestamp": wib.strftime("%d/%m/%Y %H:%M:%S"),
+
+        "namaHotel": st.session_state.nama_hotel.strip(),
+        "alamatHotel": st.session_state.alamat_hotel.strip(),
+        "brand": st.session_state.brand_hotel or "—",
+
+        "namaPIC": st.session_state.nama_pic.strip(),
+        "jabatan": st.session_state.jabatan.strip(),
+        "noHP": st.session_state.no_hp.strip(),
+        "email": st.session_state.email.strip(),
+
+        "peserta": st.session_state.peserta,
+        "tujuan": ", ".join(st.session_state.tujuan),
+
+        "tanggal": dk,
+        "slot": sv,
+
+        "durasi": st.session_state.durasi,
+        "catatan": st.session_state.catatan or "",
+
+        "notifEmail": NOTIF_EMAIL,
     }
+
+    # ─────────────────────────────────────────────
+    # SUBMIT TO GAS
+    # ─────────────────────────────────────────────
     with st.spinner("Menyimpan & mengirim notifikasi..."):
         ok, result = save_to_gas(payload)
+
+    # ─────────────────────────────────────────────
+    # SUCCESS
+    # ─────────────────────────────────────────────
     if ok:
         st.session_state.ref_number = result or ref
         st.session_state.step = 5
-        _fetch_cached.clear(); st.rerun()
-    elif result == "Jadwal_TAKEN":
+        _fetch_cached.clear()
+        st.rerun()
+
+    # ─────────────────────────────────────────────
+    # SLOT SUDAH DIAMBIL ORANG LAIN
+    # ─────────────────────────────────────────────
+    elif result == "SLOT_TAKEN":
         _fetch_cached.clear()
         fresh2 = fetch_booked()
-        alts   = get_alts(fresh2, dk, sv)
+
+        alts = get_alts(fresh2, dk, sv)
+
         st.session_state.conflict_type = "blocking"
-        st.session_state.conflict_msg  = (
-            f"Jadwal {st.session_state.sel_sess_label} baru saja dipesan saat Anda submit.")
-        st.session_state.alternatives  = alts
-        for k in ("sel_date_key","sel_date_label","sel_sess_value","sel_sess_label"):
+        st.session_state.conflict_msg = (
+            f"Jadwal {st.session_state.sel_sess_label} "
+            f"baru saja dipesan saat Anda submit."
+        )
+        st.session_state.alternatives = alts
+
+        for k in (
+            "sel_date_key",
+            "sel_date_label",
+            "sel_sess_value",
+            "sel_sess_label",
+        ):
             st.session_state[k] = None
-        st.session_state.step = 1; st.rerun()
+
+        st.session_state.step = 1
+        st.rerun()
+
+    # ─────────────────────────────────────────────
+    # ERROR LAIN
+    # ─────────────────────────────────────────────
     else:
         st.error(f"Gagal menyimpan: {result}")
-
+        
 # ── STEP 5 — SUCCESS ──────────────────────────────────────────────
 def render_success():
     st.markdown(f"""
