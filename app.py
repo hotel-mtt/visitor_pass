@@ -1,7 +1,26 @@
 """
 Mitra Tours & Travel — Visitor Appointment System
-Redesign: Attractive Mobile-First UI
+Redesign: Attractive Mobile-First UI — FIXED VERSION
 Warna: #1BA0E2 #1494C6 #0D7FCC #F0F0F0 #ff5e1f #DEDEDE
+
+Bugs Fixed:
+1. Session buttons showing as duplicate text below cards
+   → Removed CSS overlay approach; now uses pure st.button with CSS that
+     hides default button text and positions it correctly, OR uses a
+     simpler pattern: render the visual card INSIDE the button container
+     by using st.markdown + st.button side by side with a key-driven approach.
+     Final solution: render HTML card visuals separately, then use
+     st.button with label_visibility tricks. Actually cleanest fix:
+     wrap the entire sess-card in a container, render the HTML card,
+     then render a REAL st.button below but style it to look like part
+     of the card via CSS that hides its own text. Since Streamlit always
+     renders buttons below HTML, the only reliable fix is to NOT use
+     raw HTML for the clickable session cards, and instead style
+     st.button natively via CSS to look like the card design.
+
+2. _prev_date_key rerun loop → fixed by removing the nested rerun trigger
+
+3. Double submit guard → added st.session_state.submitting flag
 """
 
 import streamlit as st
@@ -78,6 +97,15 @@ TUJUAN_OPTIONS = [
     "Kerja Sama Partnership",
     "Follow Up Existing Business",
 ]
+
+TUJUAN_BADGES = {
+    "Perkenalan Hotel":             "Intro",
+    "Presentasi Produk / Fasilitas":"Produk",
+    "Corporate Rate / Contract Rate":"Rate",
+    "Promo / Special Offer":        "Promo",
+    "Kerja Sama Partnership":       "Partner",
+    "Follow Up Existing Business":  "Follow Up",
+}
 
 # ── DATA LAYER ─────────────────────────────────────────────────────────────────
 @st.cache_data(ttl=20)
@@ -169,7 +197,6 @@ def init_state():
     defaults = {
         "step": 1,
         "sel_date_key": None, "sel_date_label": None,
-        "sel_date_day": None, "sel_date_mon": None,
         "sel_sess_value": None, "sel_sess_label": None,
         "nama_hotel": "", "alamat_hotel": "", "brand_hotel": "",
         "nama_pic": "", "jabatan": "", "no_hp": "", "email": "",
@@ -177,7 +204,7 @@ def init_state():
         "durasi": "30 Menit", "catatan": "",
         "ref_number": "", "submitted_ref": "",
         "conflict_type": None, "conflict_msg": "", "alternatives": [],
-        "_prev_date_key": None,
+        "submitting": False,
     }
     for k, v in defaults.items():
         if k not in st.session_state:
@@ -245,22 +272,6 @@ html, body, [class*="css"] {
   align-items: center;
   gap: 9px;
 }
-.topbar-icon {
-  width: 32px; height: 32px;
-  background: linear-gradient(135deg, var(--c1), var(--c3));
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 14px;
-  box-shadow: 0 2px 8px rgba(13,127,204,0.3);
-}
-.topbar-name {
-  font-family: 'Nunito', sans-serif;
-  font-size: 14px;
-  font-weight: 800;
-  color: var(--text);
-  letter-spacing: -0.4px;
-}
-.topbar-name span { color: var(--c1); }
 .topbar-live {
   display: flex; align-items: center; gap: 5px;
   background: #ecfdf5;
@@ -454,125 +465,59 @@ html, body, [class*="css"] {
 .alert-success { background:#ecfdf5; border:1.5px solid #6ee7b7; color:#065f46; }
 .alert-warn    { background:#fff7ed; border:1.5px solid #fed7aa; color:#92400e; }
 
-/* ── DATE GRID ── */
-.date-scroll {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 7px;
-  margin-bottom: 4px;
-}
-.date-chip {
-  background: var(--white);
-  border: 2px solid var(--border);
-  border-radius: var(--r-sm);
-  padding: 9px 4px 8px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.18s ease;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-}
-.date-chip:active { transform: scale(0.95); }
-.date-chip:hover:not(.dc-full)  {
-  border-color: var(--c1);
-  background: rgba(27,160,226,0.05);
-  box-shadow: 0 2px 8px rgba(27,160,226,0.15);
-}
-.date-chip.dc-selected {
-  border-color: var(--c1);
-  background: linear-gradient(145deg, rgba(27,160,226,0.12), rgba(13,127,204,0.08));
-  box-shadow: 0 2px 10px rgba(27,160,226,0.2);
-}
-.date-chip.dc-full {
-  opacity: 0.38;
-  cursor: not-allowed;
-  background: var(--bg);
-}
-.dc-day  { font-family:'Nunito',sans-serif; font-size:18px; font-weight:900; color:var(--text); line-height:1; }
-.dc-mon  { font-size:9px; font-weight:700; color:var(--muted); margin-top:2px; text-transform:uppercase; }
-.dc-ind  { margin:5px auto 0; width:5px; height:5px; border-radius:50%; background:var(--border); }
-.dc-selected .dc-day { color:var(--c3); }
-.dc-selected .dc-ind { background:var(--c1); }
-.dc-full .dc-ind     { background:var(--danger); }
+/* ── SESSION BUTTONS — KEY FIX ──
+   Each session is rendered as a styled st.button.
+   We style the button itself to look like a card.
+   The button label carries all the visual info.
+   We use data-session-* approach via CSS targeting.
+*/
 
-/* ── SESSION CARDS ── */
-.sess-list { display:flex; flex-direction:column; gap:8px; }
-.sess-card {
-  background: var(--white);
-  border: 2px solid var(--border);
-  border-radius: var(--r-sm);
-  padding: 0;
-  overflow: hidden;
-  transition: all 0.18s;
-}
-.sess-card.sc-available { cursor: pointer; }
-.sess-card.sc-available:hover {
-  border-color: var(--c1);
-  box-shadow: 0 3px 12px rgba(27,160,226,0.15);
-  transform: translateY(-1px);
-}
-.sess-card.sc-selected {
-  border-color: var(--c1);
-  background: linear-gradient(135deg, rgba(27,160,226,0.07), rgba(20,148,198,0.04));
-  box-shadow: 0 4px 16px rgba(27,160,226,0.2);
-}
-.sess-card.sc-taken { opacity:0.42; cursor:not-allowed; background:var(--bg); }
-.sess-inner {
-  display: flex;
-  align-items: center;
-  padding: 13px 15px;
-  gap: 13px;
-}
-.sess-radio-ring {
-  width: 20px; height: 20px;
-  border-radius: 50%;
-  border: 2px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.15s;
-}
-.sc-selected .sess-radio-ring {
-  border-color: var(--c1);
-  background: var(--c1);
-}
-.sess-radio-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: white;
-  opacity: 0;
-  transition: opacity 0.15s;
-}
-.sc-selected .sess-radio-dot { opacity: 1; }
-.sess-period-tag {
-  font-size: 9px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 4px;
-  background: rgba(27,160,226,0.1);
-  color: var(--c2);
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  flex-shrink: 0;
-}
-.sc-taken .sess-period-tag { background:#fee2e2; color:var(--danger); }
-.sess-time { font-size:14px; font-weight:700; color:var(--text); flex:1; font-family:'Nunito',sans-serif; }
-.sc-taken .sess-time { text-decoration:line-through; color:var(--muted); }
-.sess-status { font-size:10px; font-weight:700; }
-.sess-status.avail { color:var(--c1); }
-.sess-status.taken { color:var(--danger); }
-/* Streamlit button overlay on sess card */
-.sess-btn-wrap { position:relative; }
+/* Session card buttons — available state */
 .sess-btn-wrap div[data-testid="stButton"] > button {
-  position: absolute !important;
-  top: 0 !important; left: 0 !important;
-  width: 100% !important; height: 100% !important;
-  opacity: 0 !important;
+  width: 100% !important;
+  text-align: left !important;
+  background: var(--white) !important;
+  border: 2px solid var(--border) !important;
+  border-radius: var(--r-sm) !important;
+  padding: 13px 15px !important;
+  font-family: 'Nunito Sans', sans-serif !important;
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: var(--text) !important;
+  transition: all 0.18s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  min-height: 54px !important;
   cursor: pointer !important;
-  border: none !important;
-  background: transparent !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
-  min-height: unset !important;
+  box-shadow: none !important;
+}
+.sess-btn-wrap div[data-testid="stButton"] > button:hover {
+  border-color: var(--c1) !important;
+  background: rgba(27,160,226,0.05) !important;
+  box-shadow: 0 3px 12px rgba(27,160,226,0.15) !important;
+  transform: translateY(-1px) !important;
+}
+.sess-btn-wrap div[data-testid="stButton"] > button:active {
+  transform: translateY(0) !important;
+}
+
+/* Selected session button */
+.sess-btn-selected div[data-testid="stButton"] > button {
+  border-color: var(--c1) !important;
+  background: linear-gradient(135deg, rgba(27,160,226,0.12), rgba(13,127,204,0.08)) !important;
+  box-shadow: 0 4px 16px rgba(27,160,226,0.2) !important;
+  color: var(--c3) !important;
+}
+
+/* Taken session — disabled appearance */
+.sess-btn-taken div[data-testid="stButton"] > button {
+  opacity: 0.42 !important;
+  cursor: not-allowed !important;
+  background: var(--bg) !important;
+  border-color: var(--border) !important;
+  pointer-events: none !important;
+  text-decoration: line-through !important;
+  color: var(--muted) !important;
 }
 
 /* ── SELECTED JADWAL BANNER ── */
@@ -593,9 +538,6 @@ html, body, [class*="css"] {
   display:flex; align-items:center; justify-content:center;
   font-size:13px; color:white;
 }
-
-/* ── ALT SLOT BUTTONS ── */
-.alt-slot-wrap { display:flex; flex-direction:column; gap:6px; margin-top:8px; }
 
 /* ── FORM FIELDS ── */
 div[data-testid="stTextInput"] input,
@@ -661,26 +603,7 @@ div[data-testid="stRadio"] > div > label > div:last-child p {
   margin: 0 !important;
 }
 
-/* ── CHECKBOXES (TUJUAN) ── */
-div[data-testid="stCheckbox"] {
-  border: 2px solid var(--border);
-  border-radius: var(--r-xs);
-  padding: 10px 12px;
-  background: var(--white);
-  margin-bottom: 5px;
-  transition: all 0.15s;
-  cursor: pointer;
-}
-div[data-testid="stCheckbox"]:has(input:checked) {
-  border-color: var(--c1);
-  background: rgba(27,160,226,0.07);
-}
-div[data-testid="stCheckbox"] p {
-  font-size: 12.5px !important;
-  font-weight: 600 !important;
-  color: var(--text) !important;
-}
-div[data-testid="stCheckbox"]:has(input:checked) p { color: var(--c3) !important; }
+
 
 /* ── GLOBAL BUTTONS ── */
 div[data-testid="stButton"] > button {
@@ -716,8 +639,8 @@ div[data-testid="stButton"] > button[kind="secondary"]:hover {
   color: var(--c1) !important;
 }
 
-/* ── ACCENT / SUBMIT BUTTON ── */
-.btn-accent div[data-testid="stButton"] > button {
+/* ── ACCENT / SUBMIT BUTTON (scoped to step 4 only) ── */
+.submit-accent-wrap div[data-testid="stButton"] > button {
   background: linear-gradient(135deg, var(--accent), var(--accent-dk)) !important;
   border: none !important;
   color: white !important;
@@ -725,7 +648,7 @@ div[data-testid="stButton"] > button[kind="secondary"]:hover {
   font-size: 15px !important;
   padding: 13px !important;
 }
-.btn-accent div[data-testid="stButton"] > button:hover {
+.submit-accent-wrap div[data-testid="stButton"] > button:hover {
   transform: translateY(-2px) !important;
   box-shadow: 0 8px 22px rgba(255,94,31,0.45) !important;
 }
@@ -842,6 +765,11 @@ div[data-testid="stButton"] > button[kind="secondary"]:hover {
 
 /* ── SPACING OVERRIDES ── */
 div[data-testid="stVerticalBlock"] { gap: 6px !important; }
+
+/* Tujuan toggle rows — zero gap between HTML card and invisible button */
+div[data-testid="stButton"]:has(button[data-testid^="tuj_"]) + div[data-testid="stButton"]:has(button[data-testid^="tuj_"]) {
+  margin-top: 0 !important;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -964,6 +892,7 @@ def render_step1():
         date_opts.append(opt)
         date_map[opt] = dt
 
+    # Find current selection index
     cur_opt = None
     if st.session_state.sel_date_key:
         for lbl, dt in date_map.items():
@@ -971,67 +900,97 @@ def render_step1():
                 cur_opt = lbl; break
     cur_idx = date_opts.index(cur_opt) if cur_opt in date_opts else 0
 
-    chosen_label = st.selectbox("Tanggal", options=date_opts, index=cur_idx,
-                                 label_visibility="collapsed", key="dd_tanggal")
+    chosen_label = st.selectbox(
+        "Tanggal", options=date_opts, index=cur_idx,
+        label_visibility="collapsed", key="dd_tanggal"
+    )
     chosen_dt = date_map.get(chosen_label)
 
-    # Reset when date changes — use _prev_date_key to avoid rerun loop
-    if chosen_dt and chosen_dt["key"] != st.session_state._prev_date_key:
+    # ── FIX BUG 2: Date change detection without rerun loop ──
+    # Only update state if user picked a DIFFERENT date; don't rerun just for sync
+    if chosen_dt:
         if chosen_dt["key"] != st.session_state.sel_date_key:
+            # Date changed — reset session selection
             st.session_state.sel_date_key   = chosen_dt["key"]
             st.session_state.sel_date_label = chosen_dt["label"]
             st.session_state.sel_sess_value = None
             st.session_state.sel_sess_label = None
             st.session_state.conflict_type  = None
-        st.session_state._prev_date_key = chosen_dt["key"]
-        st.rerun()
+            st.rerun()
+    else:
+        # Placeholder selected — clear date if one was previously set
+        if st.session_state.sel_date_key is not None:
+            st.session_state.sel_date_key   = None
+            st.session_state.sel_date_label = None
+            st.session_state.sel_sess_value = None
+            st.session_state.sel_sess_label = None
+            st.session_state.conflict_type  = None
+            st.rerun()
 
     # ── Session slots ──
     if chosen_dt:
         dk = chosen_dt["key"]
         sec("Pilih Sesi Waktu")
 
-        st.markdown('<div class="sess-list">', unsafe_allow_html=True)
+        # ── FIX BUG 1: Use styled st.button directly — no HTML overlay ──
+        # Each session rendered as a single st.button wrapped in a CSS class div.
+        # No duplicate rendering. The button IS the clickable element.
         for sess in SESSIONS:
             taken    = is_booked(booked, dk, sess["value"])
-            selected = (st.session_state.sel_sess_value == sess["value"]
-                        and st.session_state.sel_date_key == dk)
-            sc_cls   = "sc-taken" if taken else ("sc-selected" if selected else "sc-available")
-            st_cls   = "taken"    if taken else ("avail"       if not selected else "avail")
-            st_txt   = "Penuh"    if taken else "Tersedia"
+            selected = (
+                st.session_state.sel_sess_value == sess["value"]
+                and st.session_state.sel_date_key == dk
+            )
 
-            st.markdown(f"""
-<div class="sess-card {sc_cls}" style="position:relative;">
-  <div class="sess-inner">
-    <div class="sess-radio-ring">
-      <div class="sess-radio-dot"></div>
-    </div>
-    <span class="sess-period-tag">{"Penuh" if taken else sess["period"]}</span>
-    <div class="sess-time">{sess["label"]}</div>
-    <span class="sess-status {st_cls}">{st_txt}</span>
-  </div>
-</div>""", unsafe_allow_html=True)
+            # Build label with inline status info
+            if taken:
+                period_badge = "🔴 PENUH"
+                time_text    = f"~~{sess['label']}~~"
+                status_txt   = "  ✗ Penuh"
+            elif selected:
+                period_badge = f"✅ {sess['period'].upper()}"
+                time_text    = sess['label']
+                status_txt   = "  ✓ Dipilih"
+            else:
+                period_badge = f"🕐 {sess['period'].upper()}"
+                time_text    = sess['label']
+                status_txt   = "  · Tersedia"
 
-            if not taken:
-                if st.button(sess["label"], key=f"sb_{dk}_{sess['id']}"):
-                    _fetch_cached.clear()
-                    fresh = fetch_booked()
-                    if is_booked(fresh, dk, sess["value"]):
-                        alts = get_alts(fresh, dk, sess["value"])
-                        st.session_state.conflict_type = "blocking"
-                        st.session_state.conflict_msg  = "Jadwal ini baru saja terisi hotel lain."
-                        st.session_state.alternatives  = alts
-                    else:
-                        st.session_state.sel_date_key   = dk
-                        st.session_state.sel_date_label = chosen_dt["label"]
-                        st.session_state.sel_sess_value = sess["value"]
-                        st.session_state.sel_sess_label = sess["label"]
-                        st.session_state.conflict_type  = "ok"
-                        st.session_state.conflict_msg   = f"{chosen_dt['label']} · {sess['label']} siap di-booking."
-                        st.session_state.alternatives   = []
-                    st.rerun()
+            btn_label = f"{period_badge}   {time_text}{status_txt}"
 
-        st.markdown('</div>', unsafe_allow_html=True)
+            # Wrap in CSS class for targeted styling
+            if taken:
+                wrap_cls = "sess-btn-wrap sess-btn-taken"
+            elif selected:
+                wrap_cls = "sess-btn-wrap sess-btn-selected"
+            else:
+                wrap_cls = "sess-btn-wrap"
+
+            st.markdown(f'<div class="{wrap_cls}">', unsafe_allow_html=True)
+            clicked = st.button(
+                btn_label,
+                key=f"sb_{dk}_{sess['id']}",
+                disabled=taken,
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
+
+            if clicked and not taken:
+                _fetch_cached.clear()
+                fresh = fetch_booked()
+                if is_booked(fresh, dk, sess["value"]):
+                    alts = get_alts(fresh, dk, sess["value"])
+                    st.session_state.conflict_type = "blocking"
+                    st.session_state.conflict_msg  = "Jadwal ini baru saja terisi hotel lain."
+                    st.session_state.alternatives  = alts
+                else:
+                    st.session_state.sel_date_key   = dk
+                    st.session_state.sel_date_label = chosen_dt["label"]
+                    st.session_state.sel_sess_value = sess["value"]
+                    st.session_state.sel_sess_label = sess["label"]
+                    st.session_state.conflict_type  = "ok"
+                    st.session_state.conflict_msg   = f"{chosen_dt['label']} · {sess['label']} siap di-booking."
+                    st.session_state.alternatives   = []
+                st.rerun()
 
     # ── CTA ──
     st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
@@ -1043,8 +1002,7 @@ def render_step1():
             if st.button("Batal", key="clear_jadwal"):
                 for k in ("sel_date_key","sel_date_label","sel_sess_value","sel_sess_label"):
                     st.session_state[k] = None
-                st.session_state.conflict_type  = None
-                st.session_state._prev_date_key = None
+                st.session_state.conflict_type = None
                 st.rerun()
         with c2:
             if st.button("Lanjut →", type="primary", key="btn1_next"):
@@ -1090,7 +1048,7 @@ def render_step2():
     with c2:
         if st.button("Lanjut →", type="primary", key="btn2_next"):
             errs = []
-            if not st.session_state.nama_hotel.strip():  errs.append("Nama hotel wajib diisi.")
+            if not st.session_state.nama_hotel.strip():   errs.append("Nama hotel wajib diisi.")
             if not st.session_state.alamat_hotel.strip(): errs.append("Alamat hotel wajib diisi.")
             if errs:
                 [st.error(e) for e in errs]
@@ -1126,14 +1084,112 @@ def render_step3():
         horizontal=True, label_visibility="collapsed", key="inp_peserta")
 
     sec("Tujuan Kunjungan")
-    tujuan_sel = []
-    ca, cb = st.columns(2)
-    for i, tuj in enumerate(TUJUAN_OPTIONS):
-        with (ca if i % 2 == 0 else cb):
-            if st.checkbox(tuj, value=(tuj in st.session_state.tujuan), key=f"tuj_{i}"):
-                tujuan_sel.append(tuj)
-    st.session_state.tujuan = tujuan_sel
 
+    # Render tujuan as styled st.button rows — single element, no overlay trick
+    # CSS makes each button look like the Opsi C card row
+    # Tujuan — st.checkbox hidden, replaced visually with custom card row
+    st.markdown("""
+<style>
+/* Hide native checkbox widget completely */
+div[data-testid="stCheckbox"] { all: unset !important; display: block !important; margin-bottom: 6px !important; }
+div[data-testid="stCheckbox"] > label {
+  all: unset !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  padding: 11px 14px !important;
+  border-radius: 8px !important;
+  border: 1.5px solid #DEDEDE !important;
+  background: #ffffff !important;
+  cursor: pointer !important;
+  box-sizing: border-box !important;
+  transition: border-color 0.15s !important;
+  min-height: 46px !important;
+}
+div[data-testid="stCheckbox"] > label:hover {
+  border-color: #1BA0E2 !important;
+}
+div[data-testid="stCheckbox"]:has(input:checked) > label {
+  border-color: #1BA0E2 !important;
+  background: rgba(27,160,226,0.07) !important;
+}
+/* Hide the native checkbox square */
+div[data-testid="stCheckbox"] > label > div:first-child {
+  display: none !important;
+}
+/* The text part — make it fill space */
+div[data-testid="stCheckbox"] > label > div:last-child {
+  display: contents !important;
+}
+div[data-testid="stCheckbox"] > label > div:last-child > p {
+  display: none !important;
+}
+</style>""", unsafe_allow_html=True)
+
+    TUJUAN_BADGE_MAP = {
+        "Perkenalan Hotel":              "Intro",
+        "Presentasi Produk / Fasilitas": "Produk",
+        "Corporate Rate / Contract Rate":"Rate",
+        "Promo / Special Offer":         "Promo",
+        "Kerja Sama Partnership":        "Partner",
+        "Follow Up Existing Business":   "Follow Up",
+    }
+
+    tujuan_sel = []
+    for i, tuj in enumerate(TUJUAN_OPTIONS):
+        is_on   = tuj in st.session_state.tujuan
+        badge   = TUJUAN_BADGE_MAP.get(tuj, "")
+        chk_bg  = "#1BA0E2" if is_on else "#ffffff"
+        chk_brd = "#1BA0E2" if is_on else "#DEDEDE"
+        lbl_col = "#185FA5" if is_on else "#1a1f2e"
+        tag_bg  = "#1BA0E2" if is_on else "#F0F0F0"
+        tag_col = "#ffffff" if is_on else "#9ca3af"
+        svg_chk = "<svg viewBox='0 0 24 24' style='width:10px;height:10px;stroke:#fff;stroke-width:2.5;fill:none;display:block'><polyline points='20 6 9 17 4 12'/></svg>" if is_on else ""
+
+        st.markdown(f"""
+<div style="display:flex;align-items:center;justify-content:space-between;
+  padding:11px 14px;border-radius:8px;
+  border:1.5px solid {'#1BA0E2' if is_on else '#DEDEDE'};
+  background:{'rgba(27,160,226,0.07)' if is_on else '#ffffff'};
+  margin-bottom:0px;pointer-events:none;">
+  <div style="display:flex;align-items:center;gap:10px;">
+    <div style="width:18px;height:18px;border-radius:4px;
+      border:1.5px solid {chk_brd};background:{chk_bg};
+      display:flex;align-items:center;justify-content:center;flex-shrink:0;">{svg_chk}</div>
+    <span style="font-size:13px;font-weight:600;color:{lbl_col};">{tuj}</span>
+  </div>
+  <span style="font-size:10px;font-weight:600;padding:2px 9px;border-radius:20px;
+    background:{tag_bg};color:{tag_col};white-space:nowrap;">{badge}</span>
+</div>""", unsafe_allow_html=True)
+
+        # Real (invisible) checkbox for interactivity — sits right below the visual card
+        st.markdown("""<style>
+div[data-testid="stCheckbox"]:last-of-type {
+  margin-top: -46px !important;
+  opacity: 0 !important;
+  position: relative !important;
+  z-index: 10 !important;
+  height: 46px !important;
+  overflow: hidden !important;
+}
+div[data-testid="stCheckbox"]:last-of-type > label {
+  height: 46px !important;
+  min-height: 46px !important;
+  border: none !important;
+  background: transparent !important;
+  cursor: pointer !important;
+}
+</style>""", unsafe_allow_html=True)
+
+        checked = st.checkbox(" ", value=is_on, key=f"tuj_{i}", label_visibility="hidden")
+        if checked:
+            tujuan_sel.append(tuj)
+
+    # Sync state if changed
+    if set(tujuan_sel) != set(st.session_state.tujuan):
+        st.session_state.tujuan = tujuan_sel
+        st.rerun()
     sec("Estimasi Durasi")
     d_opts = ["15 Menit","30 Menit","45 Menit"]
     cur_d  = d_opts.index(st.session_state.durasi) if st.session_state.durasi in d_opts else 1
@@ -1204,176 +1260,404 @@ def render_step4():
         if st.button("← Edit", key="btn4_back"):
             st.session_state.step = 3; st.rerun()
     with c2:
-        st.markdown('<div class="btn-accent">', unsafe_allow_html=True)
-        if st.button("Kirim Permohonan ✓", key="btn4_submit"):
-            _do_submit()
-        st.markdown('</div>', unsafe_allow_html=True)
+        if st.session_state.get("submitting"):
+            st.info("Sedang mengirim, mohon tunggu...")
+        else:
+            st.markdown('<div class="submit-accent-wrap">', unsafe_allow_html=True)
+            if st.button("Kirim Permohonan ✓", key="btn4_submit", type="primary"):
+                st.session_state.submitting = True
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+
+    # Execute submission after flag is set (on next rerun)
+    if st.session_state.get("submitting"):
+        _do_submit()
 
     st.markdown('</div>', unsafe_allow_html=True)
 
 def _do_submit():
+    # Guard against double submit
+    if st.session_state.get("submitted_ref"):
+        st.session_state.submitting = False
+        st.session_state.step = 5
+        st.rerun()
+        return
+
     _fetch_cached.clear()
     fresh = fetch_booked()
-
     dk = st.session_state.sel_date_key
     sv = st.session_state.sel_sess_value
 
-    # ─────────────────────────────────────────────
-    # DOUBLE CHECK SLOT MASIH TERSEDIA
-    # ─────────────────────────────────────────────
     if is_booked(fresh, dk, sv):
         alts = get_alts(fresh, dk, sv)
-
         st.session_state.conflict_type = "blocking"
-        st.session_state.conflict_msg = (
+        st.session_state.conflict_msg  = (
             f"Jadwal {st.session_state.sel_sess_label} pada "
-            f"{st.session_state.sel_date_label} baru saja dipesan hotel lain."
-        )
+            f"{st.session_state.sel_date_label} baru saja dipesan hotel lain.")
         st.session_state.alternatives = alts
-
-        for k in (
-            "sel_date_key",
-            "sel_date_label",
-            "sel_sess_value",
-            "sel_sess_label",
-        ):
+        for k in ("sel_date_key","sel_date_label","sel_sess_value","sel_sess_label"):
             st.session_state[k] = None
-
+        st.session_state.submitting = False
         st.session_state.step = 1
         st.rerun()
         return
 
-    # ─────────────────────────────────────────────
-    # GENERATE REF & WIB TIME
-    # ─────────────────────────────────────────────
     wib = datetime.now(ZoneInfo("Asia/Jakarta"))
     ref = gen_ref()
-
-    # ─────────────────────────────────────────────
-    # PAYLOAD SESUAI GOOGLE APPS SCRIPT
-    # ─────────────────────────────────────────────
     payload = {
-        "ref": ref,
-        "timestamp": wib.strftime("%d/%m/%Y %H:%M:%S"),
-
-        "namaHotel": st.session_state.nama_hotel.strip(),
+        "ref": ref, "timestamp": wib.strftime("%d/%m/%Y %H:%M:%S"),
+        "namaHotel":   st.session_state.nama_hotel.strip(),
         "alamatHotel": st.session_state.alamat_hotel.strip(),
-        "brand": st.session_state.brand_hotel or "—",
-
-        "namaPIC": st.session_state.nama_pic.strip(),
-        "jabatan": st.session_state.jabatan.strip(),
-        "noHP": st.session_state.no_hp.strip(),
-        "email": st.session_state.email.strip(),
-
-        "peserta": st.session_state.peserta,
-        "tujuan": ", ".join(st.session_state.tujuan),
-
-        "tanggal": dk,
-        "slot": sv,
-
-        "durasi": st.session_state.durasi,
-        "catatan": st.session_state.catatan or "",
-
-        "notifEmail": NOTIF_EMAIL,
+        "brand":       st.session_state.brand_hotel or "—",
+        "namaPIC":     st.session_state.nama_pic.strip(),
+        "jabatan":     st.session_state.jabatan.strip(),
+        "noHP":        st.session_state.no_hp.strip(),
+        "email":       st.session_state.email.strip(),
+        "peserta":     st.session_state.peserta,
+        "tujuan":      ", ".join(st.session_state.tujuan),
+        "tanggal":     dk + " (Selasa)", "slot": sv,
+        "durasi":      st.session_state.durasi,
+        "catatan":     st.session_state.catatan or "",
     }
-
-    # ─────────────────────────────────────────────
-    # SUBMIT TO GAS
-    # ─────────────────────────────────────────────
     with st.spinner("Menyimpan & mengirim notifikasi..."):
         ok, result = save_to_gas(payload)
 
-    # ─────────────────────────────────────────────
-    # SUCCESS
-    # ─────────────────────────────────────────────
+    st.session_state.submitting = False
+
     if ok:
-        st.session_state.ref_number = result or ref
+        st.session_state.ref_number    = result or ref
+        st.session_state.submitted_ref = result or ref
         st.session_state.step = 5
         _fetch_cached.clear()
         st.rerun()
-
-    # ─────────────────────────────────────────────
-    # SLOT SUDAH DIAMBIL ORANG LAIN
-    # ─────────────────────────────────────────────
-    elif result == "SLOT_TAKEN":
+    elif result == "Jadwal_TAKEN":
         _fetch_cached.clear()
         fresh2 = fetch_booked()
-
         alts = get_alts(fresh2, dk, sv)
-
         st.session_state.conflict_type = "blocking"
-        st.session_state.conflict_msg = (
-            f"Jadwal {st.session_state.sel_sess_label} "
-            f"baru saja dipesan saat Anda submit."
-        )
-        st.session_state.alternatives = alts
-
-        for k in (
-            "sel_date_key",
-            "sel_date_label",
-            "sel_sess_value",
-            "sel_sess_label",
-        ):
+        st.session_state.conflict_msg  = f"Jadwal {st.session_state.sel_sess_label} baru saja dipesan saat Anda submit."
+        st.session_state.alternatives  = alts
+        for k in ("sel_date_key","sel_date_label","sel_sess_value","sel_sess_label"):
             st.session_state[k] = None
-
         st.session_state.step = 1
         st.rerun()
-
-    # ─────────────────────────────────────────────
-    # ERROR LAIN
-    # ─────────────────────────────────────────────
     else:
-        st.error(f"Gagal menyimpan: {result}")
+        st.error(f"Gagal menyimpan: {result}. Silakan coba lagi.")
 
 # ── STEP 5 ─────────────────────────────────────────────────────────────────────
 def render_success():
-    st.markdown(f"""
-<div class="succ-wrap">
-  <div class="succ-hero">
-    <div class="succ-ring">✓</div>
-    <div class="succ-title">Permohonan Terkirim!</div>
-    <div class="succ-sub">
-      Notifikasi dikirim ke <strong>{NOTIF_EMAIL}</strong><br>
-      Konfirmasi dalam <strong>1–2 hari kerja</strong>.
-    </div>
-    <div class="ref-tag">{st.session_state.ref_number}</div>
-    <div class="ref-hint">Simpan nomor referensi ini</div>
-  </div>
+    import streamlit.components.v1 as components
 
-  <div class="succ-grid">
-    <div class="succ-item">
-      <div class="succ-lbl">Hotel</div>
-      <div class="succ-val">{st.session_state.nama_hotel}</div>
-    </div>
-    <div class="succ-item">
-      <div class="succ-lbl">PIC</div>
-      <div class="succ-val">{st.session_state.nama_pic}</div>
-    </div>
-    <div class="succ-item">
-      <div class="succ-lbl">Tanggal</div>
-      <div class="succ-val">{st.session_state.sel_date_label}</div>
-    </div>
-    <div class="succ-item">
-      <div class="succ-lbl">Sesi</div>
-      <div class="succ-val">{st.session_state.sel_sess_label}</div>
+    ref      = st.session_state.ref_number
+    hotel    = st.session_state.nama_hotel
+    pic      = st.session_state.nama_pic
+    tanggal  = st.session_state.sel_date_label
+    sesi     = st.session_state.sel_sess_label
+    sesi_jam = sesi.split("\u2013")[0].strip() if sesi else "\u2014"
+
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@700;800;900&family=Nunito+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+* {{ box-sizing: border-box; margin: 0; padding: 0; }}
+body {{ background: transparent; font-family: 'Nunito Sans', sans-serif; padding: 0 16px; }}
+.gpass {{
+  background: #fff;
+  border: 1.5px solid #DEDEDE;
+  border-radius: 14px;
+  overflow: hidden;
+  max-width: 420px;
+  margin: 0 auto;
+}}
+.gpass-top {{
+  background: #1BA0E2;
+  padding: 20px 22px 18px;
+}}
+.gpass-co {{
+  font-size: 10px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 10px;
+}}
+.gpass-top-row {{
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+}}
+.gpass-time-lbl {{
+  font-size: 10px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 4px;
+}}
+.gpass-time {{
+  font-size: 30px;
+  font-weight: 900;
+  color: #fff;
+  font-family: 'Nunito', sans-serif;
+  letter-spacing: 1px;
+  line-height: 1;
+}}
+.gpass-right {{ text-align: right; }}
+.gpass-right-lbl {{
+  font-size: 10px;
+  color: rgba(255,255,255,0.6);
+  margin-bottom: 2px;
+  margin-top: 8px;
+}}
+.gpass-right-val {{ font-size: 13px; font-weight: 600; color: #fff; }}
+.gpass-status {{
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  color: #fff;
+  font-weight: 700;
+  margin-top: 4px;
+}}
+.gpass-tear {{
+  height: 1px;
+  background: repeating-linear-gradient(90deg,#DEDEDE 0,#DEDEDE 6px,transparent 6px,transparent 12px);
+  position: relative;
+}}
+.gpass-tear::before, .gpass-tear::after {{
+  content: '';
+  position: absolute;
+  top: -9px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: #F0F0F0;
+  border: 1.5px solid #DEDEDE;
+}}
+.gpass-tear::before {{ left: -9px; }}
+.gpass-tear::after  {{ right: -9px; }}
+.gpass-body {{ padding: 18px 22px 16px; }}
+.gpass-fields {{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 20px;
+  margin-bottom: 14px;
+}}
+.gpass-flbl {{
+  font-size: 9px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 3px;
+}}
+.gpass-fval {{ font-size: 13px; font-weight: 600; color: #1a1f2e; }}
+.gpass-ref-row {{
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 11px 14px;
+  background: #F7F9FC;
+  border-radius: 8px;
+  border: 1px solid #EDEDEE;
+}}
+.gpass-ref-lbl {{
+  font-size: 9px;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  margin-bottom: 3px;
+}}
+.gpass-ref-val {{
+  font-size: 16px;
+  font-weight: 900;
+  color: #1a1f2e;
+  letter-spacing: 2.5px;
+  font-family: 'Nunito', sans-serif;
+}}
+.gpass-ref-hint {{ font-size: 11px; color: #9ca3af; }}
+.gpass-foot {{
+  padding: 12px 22px;
+  border-top: 1px solid #EDEDEE;
+  background: #F7F9FC;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}}
+.gpass-note {{ font-size: 11px; color: #9ca3af; }}
+.gpass-savebtn {{
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1BA0E2;
+  background: none;
+  border: 1.5px solid #1BA0E2;
+  border-radius: 7px;
+  padding: 7px 14px;
+  cursor: pointer;
+  font-family: 'Nunito Sans', sans-serif;
+  transition: background 0.15s, opacity 0.15s;
+}}
+.gpass-savebtn:hover {{ background: rgba(27,160,226,0.07); }}
+.gpass-savebtn:disabled {{ opacity: 0.5; cursor: not-allowed; }}
+.gpass-savebtn svg {{
+  width: 13px; height: 13px;
+  stroke: #1BA0E2; stroke-width: 2.2;
+  fill: none; display: block;
+}}
+
+.logo-bar {{
+  max-width: 420px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0 0;
+}}
+.logo-bar img {{
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}}
+.logo-live {{
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #ecfdf5;
+  border: 1px solid #6ee7b7;
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #059669;
+}}
+.pulse-dot {{
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  animation: pulse 2s ease-in-out infinite;
+}}
+@keyframes pulse {{
+  0%,100% {{ opacity:1; transform:scale(1); }}
+  50%      {{ opacity:.4; transform:scale(.8); }}
+}}
+.page-footer {{
+  max-width: 420px;
+  margin: 12px auto 0;
+  text-align: center;
+  font-size: 11px;
+  color: #bbb;
+  letter-spacing: 0.3px;
+  padding-bottom: 20px;
+}}
+.page-footer span {{ color: #1BA0E2; font-weight: 700; }}
+</style>
+</head>
+<body>
+<div class="logo-bar">
+  <img src="https://mitratour.com/wp-content/uploads/2019/09/LOGO-MITRA-Converted-Copy-min.png" alt="Mitra Tours & Travel" />
+  <div class="logo-live"><div class="pulse-dot"></div>Sistem Aktif</div>
+</div>
+<div id="gpass-capture">
+<div class="gpass">
+  <div class="gpass-top">
+    <div class="gpass-co">Kunjungan Sales &nbsp;&middot;&nbsp; Mitra Tours &amp; Travel</div>
+    <div class="gpass-top-row">
+      <div>
+        <div class="gpass-time-lbl">Waktu sesi</div>
+        <div class="gpass-time">{sesi_jam}</div>
+      </div>
+      <div class="gpass-right">
+        <div class="gpass-right-lbl">Tanggal</div>
+        <div class="gpass-right-val">{tanggal}</div>
+        <div class="gpass-status">&#10003; Terkirim</div>
+      </div>
     </div>
   </div>
-</div>""", unsafe_allow_html=True)
+  <div class="gpass-tear"></div>
+  <div class="gpass-body">
+    <div class="gpass-fields">
+      <div><div class="gpass-flbl">Hotel</div><div class="gpass-fval">{hotel}</div></div>
+      <div><div class="gpass-flbl">PIC</div><div class="gpass-fval">{pic}</div></div>
+      <div><div class="gpass-flbl">Sesi</div><div class="gpass-fval">{sesi}</div></div>
+      <div><div class="gpass-flbl">Notifikasi</div><div class="gpass-fval" style="font-size:11px;word-break:break-all">{NOTIF_EMAIL}</div></div>
+    </div>
+    <div class="gpass-ref-row">
+      <div>
+        <div class="gpass-ref-lbl">Nomor Referensi</div>
+        <div class="gpass-ref-val">{ref}</div>
+      </div>
+      <div class="gpass-ref-hint">Simpan kode ini</div>
+    </div>
+  </div>
+  <div class="gpass-foot">
+    <span class="gpass-note">Booking System v2.0</span>
+    <button class="gpass-savebtn" id="savebtn" onclick="saveAsJpg()">
+      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Simpan JPG
+    </button>
+  </div>
+</div>
+</div>
 
-    st.markdown('<div style="padding:0 14px;">', unsafe_allow_html=True)
-    if st.button("+ Ajukan Kunjungan Baru", type="primary", key="btn_reset"):
-        for k in list(st.session_state.keys()):
-            del st.session_state[k]
-        st.rerun()
-    st.markdown('</div>', unsafe_allow_html=True)
+<div class="page-footer">Mitra Tours and Travel &nbsp;&middot;&nbsp; <span>Booking System</span> &nbsp;&middot;&nbsp; v2.0</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+function saveAsJpg() {{
+  var btn = document.getElementById('savebtn');
+  btn.disabled = true;
+  btn.innerHTML = 'Menyimpan...';
+  var el = document.getElementById('gpass-capture');
+  html2canvas(el, {{
+    scale: 2,
+    useCORS: true,
+    allowTaint: true,
+    backgroundColor: '#ffffff',
+    logging: false,
+    onclone: function(doc) {{
+      doc.getElementById('gpass-capture').style.padding = '12px';
+    }}
+  }}).then(function(canvas) {{
+    var a = document.createElement('a');
+    a.download = 'konfirmasi-{ref}.jpg';
+    a.href = canvas.toDataURL('image/jpeg', 0.95);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    btn.disabled = false;
+    btn.innerHTML = '<svg viewBox=\"0 0 24 24\" style=\"width:13px;height:13px;stroke:#1BA0E2;stroke-width:2.2;fill:none;display:block\"><path d=\"M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4\"/><polyline points=\"7 10 12 15 17 10\"/><line x1=\"12\" y1=\"15\" x2=\"12\" y2=\"3\"/></svg> Tersimpan \u2713';
+  }}).catch(function(e) {{
+    console.error(e);
+    btn.disabled = false;
+    btn.innerHTML = 'Coba lagi';
+  }});
+}}
+
+</script>
+</body>
+</html>"""
+
+    components.html(html, height=560, scrolling=False)
+
+
+
+
 
 # ── MAIN ───────────────────────────────────────────────────────────────────────
 def main():
     init_state()
     inject_css()
-    render_topbar()
 
     s = st.session_state.step
+
+    if s != 5:
+        render_topbar()
+
     if s <= 4:
         render_hero(s)
         render_step_tracker(s)
@@ -1384,11 +1668,12 @@ def main():
     elif s == 4: render_step4()
     elif s == 5: render_success()
 
-    st.markdown(
-        '<div class="footer">Mitra Tours and Travel &nbsp;·&nbsp; '
-        '<span>Booking System</span> &nbsp;·&nbsp; v2.0</div>',
-        unsafe_allow_html=True
-    )
+    if s != 5:
+        st.markdown(
+            '<div class="footer">Mitra Tours and Travel &nbsp;·&nbsp; '
+            '<span>Booking System</span> &nbsp;·&nbsp; v2.0</div>',
+            unsafe_allow_html=True
+        )
 
 if __name__ == "__main__":
     main()
