@@ -1608,10 +1608,6 @@ function saveAsJpg() {{
 
     components.html(html, height=560, scrolling=False)
 
-
-
-
-
 # ── MAIN ───────────────────────────────────────────────────────────────────────
 def main():
     init_state()
