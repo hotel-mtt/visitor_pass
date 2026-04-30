@@ -1228,7 +1228,7 @@ def render_step4():
             st.info("Sedang mengirim, mohon tunggu...")
         else:
             st.markdown('<div class="submit-accent-wrap">', unsafe_allow_html=True)
-            if st.button("Kirim Permohonan ✓", key="btn4_submit", type="primary"):
+            if st.button("Kirim ✓", key="btn4_submit", type="primary"):
                 st.session_state.submitting = True
                 st.rerun()
             st.markdown('</div>', unsafe_allow_html=True)
