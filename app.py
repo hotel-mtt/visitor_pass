@@ -473,185 +473,34 @@ html, body, [class*="css"] {
 */
 
 /* Session card buttons — available state */
-.sess-btn-wrap div[data-testid="stButton"] > button {
+/* ── SESSION BUTTONS — Opsi A card style ── */
+div[data-testid="stButton"]:has(> button[data-testid^="sb_"]) {
+  margin-bottom: 6px !important;
+}
+div[data-testid="stButton"] > button[data-testid^="sb_"] {
   width: 100% !important;
-  text-align: left !important;
-  background: var(--white) !important;
-  border: 2px solid var(--border) !important;
-  border-radius: var(--r-sm) !important;
-  padding: 13px 15px !important;
-  font-family: 'Nunito Sans', sans-serif !important;
-  font-size: 14px !important;
-  font-weight: 700 !important;
-  color: var(--text) !important;
-  transition: all 0.18s ease !important;
-  display: flex !important;
-  align-items: center !important;
-  min-height: 54px !important;
+  background: #ffffff !important;
+  border: 1.5px solid #DEDEDE !important;
+  border-radius: 10px !important;
+  padding: 0 14px !important;
+  min-height: 50px !important;
   cursor: pointer !important;
   box-shadow: none !important;
+  transition: border-color 0.15s, background 0.15s !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  text-align: left !important;
 }
-.sess-btn-wrap div[data-testid="stButton"] > button:hover {
-  border-color: var(--c1) !important;
-  background: rgba(27,160,226,0.05) !important;
-  box-shadow: 0 3px 12px rgba(27,160,226,0.15) !important;
-  transform: translateY(-1px) !important;
+div[data-testid="stButton"] > button[data-testid^="sb_"]:hover {
+  border-color: #1BA0E2 !important;
+  background: rgba(27,160,226,0.04) !important;
 }
-.sess-btn-wrap div[data-testid="stButton"] > button:active {
-  transform: translateY(0) !important;
+div[data-testid="stButton"] > button[data-testid^="sb_"] > div,
+div[data-testid="stButton"] > button[data-testid^="sb_"] > div > p {
+  display: none !important;
 }
-
-/* Selected session button */
-.sess-btn-selected div[data-testid="stButton"] > button {
-  border-color: var(--c1) !important;
-  background: linear-gradient(135deg, rgba(27,160,226,0.12), rgba(13,127,204,0.08)) !important;
-  box-shadow: 0 4px 16px rgba(27,160,226,0.2) !important;
-  color: var(--c3) !important;
-}
-
-/* Taken session — disabled appearance */
-.sess-btn-taken div[data-testid="stButton"] > button {
-  opacity: 0.42 !important;
-  cursor: not-allowed !important;
-  background: var(--bg) !important;
-  border-color: var(--border) !important;
-  pointer-events: none !important;
-  text-decoration: line-through !important;
-  color: var(--muted) !important;
-}
-
-/* ── SELECTED JADWAL BANNER ── */
-.sel-banner {
-  background: linear-gradient(135deg, var(--c1), var(--c3));
-  border-radius: var(--r-sm);
-  padding: 12px 16px;
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 16px;
-  box-shadow: 0 4px 16px rgba(13,127,204,0.25);
-}
-.sb-info { flex:1; }
-.sb-tag { font-size:9px; font-weight:700; color:rgba(255,255,255,0.65); text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px; }
-.sb-val { font-size:13px; font-weight:700; color:white; }
-.sb-check {
-  width:28px; height:28px; border-radius:50%;
-  background:rgba(255,255,255,0.22);
-  display:flex; align-items:center; justify-content:center;
-  font-size:13px; color:white;
-}
-
-/* ── FORM FIELDS ── */
-div[data-testid="stTextInput"] input,
-div[data-testid="stTextArea"] textarea {
-  border: 2px solid var(--border) !important;
-  border-radius: var(--r-xs) !important;
-  font-family: 'Nunito Sans', sans-serif !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  background: var(--white) !important;
-  color: var(--text) !important;
-  padding: 11px 13px !important;
-  transition: border-color 0.18s, box-shadow 0.18s !important;
-}
-div[data-testid="stTextInput"] input:focus,
-div[data-testid="stTextArea"] textarea:focus {
-  border-color: var(--c1) !important;
-  box-shadow: 0 0 0 3px rgba(27,160,226,0.14) !important;
-  background: var(--white) !important;
-  outline: none !important;
-}
-div[data-testid="stSelectbox"] > div > div {
-  border: 2px solid var(--border) !important;
-  border-radius: var(--r-xs) !important;
-  font-family: 'Nunito Sans', sans-serif !important;
-  font-size: 14px !important;
-  background: var(--white) !important;
-}
-[data-testid="stWidgetLabel"] p,
-label {
-  font-size: 12.5px !important;
-  font-weight: 700 !important;
-  color: var(--text) !important;
-  margin-bottom: 4px !important;
-}
-
-/* ── PESERTA RADIO ── */
-div[data-testid="stRadio"] > div {
-  gap: 6px !important;
-  flex-wrap: wrap !important;
-}
-div[data-testid="stRadio"] > div > label {
-  border: 2px solid var(--border) !important;
-  border-radius: var(--r-xs) !important;
-  padding: 8px 14px !important;
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  background: var(--white) !important;
-  cursor: pointer !important;
-  transition: all 0.15s !important;
-  color: var(--text) !important;
-}
-div[data-testid="stRadio"] > div > label:has(input:checked) {
-  border-color: var(--c1) !important;
-  background: rgba(27,160,226,0.10) !important;
-  color: var(--c3) !important;
-}
-div[data-testid="stRadio"] > div > label > div:first-child { display:none !important; }
-div[data-testid="stRadio"] > div > label > div:last-child p {
-  font-size: 13px !important;
-  font-weight: 600 !important;
-  color: inherit !important;
-  margin: 0 !important;
-}
-
-
-
-/* ── GLOBAL BUTTONS ── */
-div[data-testid="stButton"] > button {
-  font-family: 'Nunito', sans-serif !important;
-  font-weight: 800 !important;
-  font-size: 14px !important;
-  border-radius: var(--r-xs) !important;
-  padding: 12px 18px !important;
-  width: 100% !important;
-  transition: all 0.18s !important;
-  letter-spacing: -0.2px !important;
-}
-div[data-testid="stButton"] > button[kind="primary"] {
-  background: linear-gradient(135deg, var(--c1), var(--c3)) !important;
-  border: none !important;
-  color: white !important;
-  box-shadow: 0 4px 14px rgba(13,127,204,0.3) !important;
-}
-div[data-testid="stButton"] > button[kind="primary"]:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 6px 20px rgba(13,127,204,0.4) !important;
-}
-div[data-testid="stButton"] > button[kind="primary"]:active {
-  transform: translateY(0) !important;
-}
-div[data-testid="stButton"] > button[kind="secondary"] {
-  background: var(--white) !important;
-  border: 2px solid var(--border) !important;
-  color: var(--muted) !important;
-}
-div[data-testid="stButton"] > button[kind="secondary"]:hover {
-  border-color: var(--c1) !important;
-  color: var(--c1) !important;
-}
-
-/* ── ACCENT / SUBMIT BUTTON (scoped to step 4 only) ── */
-.submit-accent-wrap div[data-testid="stButton"] > button {
-  background: linear-gradient(135deg, var(--accent), var(--accent-dk)) !important;
-  border: none !important;
-  color: white !important;
-  box-shadow: 0 4px 14px rgba(255,94,31,0.35) !important;
-  font-size: 15px !important;
-  padding: 13px !important;
-}
-.submit-accent-wrap div[data-testid="stButton"] > button:hover {
-  transform: translateY(-2px) !important;
-  box-shadow: 0 8px 22px rgba(255,94,31,0.45) !important;
-}
+/* sb_ button styles handled per-session inline */
 
 /* ── REVIEW TABLE ── */
 .rev-card {
@@ -758,6 +607,80 @@ div[data-testid="stButton"] > button[kind="secondary"]:hover {
 }
 .succ-lbl { font-size:9px; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; color:var(--muted); margin-bottom:3px; }
 .succ-val { font-size:13px; font-weight:700; color:var(--text); }
+
+/* ── GLOBAL BUTTONS ── */
+div[data-testid="stButton"] > button {
+  font-family: 'Nunito', sans-serif !important;
+  font-weight: 800 !important;
+  font-size: 14px !important;
+  border-radius: var(--r-xs) !important;
+  padding: 12px 18px !important;
+  width: 100% !important;
+  transition: all 0.18s !important;
+  letter-spacing: -0.2px !important;
+}
+div[data-testid="stButton"] > button[kind="primary"] {
+  background: linear-gradient(135deg, var(--c1), var(--c3)) !important;
+  border: none !important;
+  color: white !important;
+  box-shadow: 0 4px 14px rgba(13,127,204,0.3) !important;
+}
+div[data-testid="stButton"] > button[kind="primary"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(13,127,204,0.4) !important;
+}
+div[data-testid="stButton"] > button[kind="secondary"] {
+  background: var(--white) !important;
+  border: 2px solid var(--border) !important;
+  color: var(--muted) !important;
+}
+div[data-testid="stButton"] > button[kind="secondary"]:hover {
+  border-color: var(--c1) !important;
+  color: var(--c1) !important;
+}
+
+/* ── PESERTA & DURASI RADIO ── */
+div[data-testid="stRadio"] > div {
+  gap: 6px !important;
+  flex-wrap: wrap !important;
+}
+div[data-testid="stRadio"] > div > label {
+  border: 2px solid var(--border) !important;
+  border-radius: var(--r-xs) !important;
+  padding: 8px 14px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  background: var(--white) !important;
+  cursor: pointer !important;
+  transition: all 0.15s !important;
+  color: var(--text) !important;
+}
+div[data-testid="stRadio"] > div > label:has(input:checked) {
+  border-color: var(--c1) !important;
+  background: rgba(27,160,226,0.10) !important;
+  color: var(--c3) !important;
+}
+div[data-testid="stRadio"] > div > label > div:first-child { display:none !important; }
+div[data-testid="stRadio"] > div > label > div:last-child p {
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  color: inherit !important;
+  margin: 0 !important;
+}
+
+/* ── ACCENT SUBMIT BUTTON (Step 4 only) ── */
+.submit-accent-wrap div[data-testid="stButton"] > button {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dk)) !important;
+  border: none !important;
+  color: white !important;
+  box-shadow: 0 4px 14px rgba(255,94,31,0.35) !important;
+  font-size: 15px !important;
+  padding: 13px !important;
+}
+.submit-accent-wrap div[data-testid="stButton"] > button:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 8px 22px rgba(255,94,31,0.45) !important;
+}
 
 /* ── FOOTER ── */
 .footer { text-align:center; padding:20px 0 32px; font-size:11px; color:#bbb; letter-spacing:0.3px; }
@@ -932,47 +855,87 @@ def render_step1():
         dk = chosen_dt["key"]
         sec("Pilih Sesi Waktu")
 
-        # ── FIX BUG 1: Use styled st.button directly — no HTML overlay ──
-        # Each session rendered as a single st.button wrapped in a CSS class div.
-        # No duplicate rendering. The button IS the clickable element.
+        # ── Session rendering: HTML card + invisible overlapping button ──
+        # All cards rendered first as a group, then buttons overlap via CSS
+        # Each card uses a wrapper container with consistent height
+
+        CARD_H = 52  # px — fixed height for card + button alignment
+
+        # One-time CSS for this render
+        sess_css = "<style>"
         for sess in SESSIONS:
+            sid = f"sb_{dk}_{sess['id']}"
+            sess_css += (
+                f"div[data-testid='stButton']:has(>button[data-testid='{sid}']){{"
+                f"margin-top:-{CARD_H}px!important;"
+                f"margin-bottom:6px!important;"
+                f"position:relative!important;z-index:10!important;}}"
+                f"div[data-testid='stButton']>button[data-testid='{sid}']{{"
+                f"opacity:0!important;height:{CARD_H}px!important;"
+                f"min-height:{CARD_H}px!important;width:100%!important;"
+                f"border:none!important;background:transparent!important;"
+                f"box-shadow:none!important;padding:0!important;"
+                f"border-radius:10px!important;"
+                f"cursor:{'not-allowed' if is_booked(booked, dk, sess['value']) else 'pointer'}!important;"
+                f"pointer-events:{'none' if is_booked(booked, dk, sess['value']) else 'auto'}!important;"
+                f"outline:none!important;box-shadow:none!important;}}"
+                f"div[data-testid='stButton']>button[data-testid='{sid}']:focus{{"
+                f"outline:none!important;box-shadow:none!important;background:transparent!important;}}"
+                f"div[data-testid='stButton']>button[data-testid='{sid}']:active{{"
+                f"outline:none!important;box-shadow:none!important;background:transparent!important;transform:none!important;}}"
+                f"div[data-testid='stButton']>button[data-testid='{sid}']:focus-visible{{"
+                f"outline:none!important;box-shadow:none!important;}}"
+            )
+        sess_css += "</style>"
+        st.markdown(sess_css, unsafe_allow_html=True)
+
+        for i, sess in enumerate(SESSIONS):
             taken    = is_booked(booked, dk, sess["value"])
             selected = (
                 st.session_state.sel_sess_value == sess["value"]
                 and st.session_state.sel_date_key == dk
             )
+            sid = f"sb_{dk}_{sess['id']}"
 
-            # Build label with inline status info
-            if taken:
-                period_badge = "🔴 PENUH"
-                time_text    = f"~~{sess['label']}~~"
-                status_txt   = "  ✗ Penuh"
-            elif selected:
-                period_badge = f"✅ {sess['period'].upper()}"
-                time_text    = sess['label']
-                status_txt   = "  ✓ Dipilih"
-            else:
-                period_badge = f"🕐 {sess['period'].upper()}"
-                time_text    = sess['label']
-                status_txt   = "  · Tersedia"
+            radio_bg   = "#1BA0E2" if selected else "#ffffff"
+            radio_brd  = "#1BA0E2" if selected else "#DEDEDE"
+            period_bg  = "#1BA0E2" if selected else ("#fee2e2" if taken else "#F0F0F0")
+            period_col = "#ffffff" if selected else ("#ef4444" if taken else "#6b7280")
+            period_lbl = "Penuh"   if taken else sess["period"]
+            time_col   = "#185FA5" if selected else ("#9ca3af" if taken else "#1a1f2e")
+            time_dec   = "line-through" if taken else "none"
+            status_txt = "Penuh"   if taken else ("Dipilih" if selected else "Tersedia")
+            status_col = "#ef4444" if taken else ("#1BA0E2" if selected else "#9ca3af")
+            row_border = "#1BA0E2" if selected else "#DEDEDE"
+            row_bg     = "rgba(27,160,226,0.07)" if selected else ("#F7F7F7" if taken else "#ffffff")
+            op_val     = "0.42" if taken else "1"
+            radio_inner = "<div style='width:7px;height:7px;border-radius:50%;background:#fff;'></div>" if selected else ""
 
-            btn_label = f"{period_badge}   {time_text}{status_txt}"
-
-            # Wrap in CSS class for targeted styling
-            if taken:
-                wrap_cls = "sess-btn-wrap sess-btn-taken"
-            elif selected:
-                wrap_cls = "sess-btn-wrap sess-btn-selected"
-            else:
-                wrap_cls = "sess-btn-wrap"
-
-            st.markdown(f'<div class="{wrap_cls}">', unsafe_allow_html=True)
-            clicked = st.button(
-                btn_label,
-                key=f"sb_{dk}_{sess['id']}",
-                disabled=taken,
+            # Visual card — fixed height, margin-bottom negative pulls button up
+            st.markdown(
+                f"<div style='display:flex;align-items:center;gap:12px;"
+                f"padding:0 14px;height:{CARD_H}px;"
+                f"border-radius:10px;border:1.5px solid {row_border};"
+                f"background:{row_bg};opacity:{op_val};"
+                f"margin-bottom:-{CARD_H}px;position:relative;z-index:1;"
+                f"pointer-events:none;box-sizing:border-box;'>"
+                f"<div style='width:18px;height:18px;border-radius:50%;flex-shrink:0;"
+                f"border:1.5px solid {radio_brd};background:{radio_bg};"
+                f"display:flex;align-items:center;justify-content:center;'>"
+                f"{radio_inner}</div>"
+                f"<span style='font-size:10px;font-weight:600;padding:2px 9px;"
+                f"border-radius:20px;background:{period_bg};color:{period_col};"
+                f"white-space:nowrap;flex-shrink:0;'>{period_lbl}</span>"
+                f"<span style='font-size:14px;font-weight:600;color:{time_col};"
+                f"flex:1;text-decoration:{time_dec};'>{sess['label']}</span>"
+                f"<span style='font-size:11px;font-weight:500;color:{status_col};'>"
+                f"{status_txt}</span>"
+                f"</div>",
+                unsafe_allow_html=True
             )
-            st.markdown('</div>', unsafe_allow_html=True)
+
+            # Invisible button exactly same height as card
+            clicked = st.button("​", key=sid, disabled=taken)
 
             if clicked and not taken:
                 _fetch_cached.clear()
@@ -988,7 +951,9 @@ def render_step1():
                     st.session_state.sel_sess_value = sess["value"]
                     st.session_state.sel_sess_label = sess["label"]
                     st.session_state.conflict_type  = "ok"
-                    st.session_state.conflict_msg   = f"{chosen_dt['label']} · {sess['label']} siap di-booking."
+                    st.session_state.conflict_msg   = (
+                        chosen_dt["label"] + " · " + sess["label"] + " siap di-booking."
+                    )
                     st.session_state.alternatives   = []
                 st.rerun()
 
@@ -996,7 +961,6 @@ def render_step1():
     st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
 
     if st.session_state.sel_date_key and st.session_state.sel_sess_value:
-        sel_banner()
         c1, c2 = st.columns([1, 2])
         with c1:
             if st.button("Batal", key="clear_jadwal"):
