@@ -40,7 +40,7 @@ GAS_ENDPOINT    = "https://script.google.com/macros/s/AKfycbz78iwrv1FiIHqpqbA4dX
 SHEET_ID        = "1AQz-w3sLjGVdOsneDmdTFHFW6Nx7Z337Kjw2zzqFoXI"
 API_KEY         = "AIzaSyA1Mau8yZxao0MD5Mx_Dt027EuMbrUN9oo"
 SHEET_NAME      = "Sheet1"
-NOTIF_EMAIL     = "d4t4m1tr4@gmail.com"
+NOTIF_EMAIL     = "hotel@mitratour.com"
 SHEETS_READ_URL = (
     f"https://sheets.googleapis.com/v4/spreadsheets/{SHEET_ID}"
     f"/values/{SHEET_NAME}?key={API_KEY}"
